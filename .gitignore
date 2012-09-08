@@ -1,0 +1,11 @@
+*.pyc
+*.~
+*.swp
+*/DB/*
+*/Convert/*
+*DB/
+*Convert/
+*~
+*files/
+*old/
+*/RwaData/*
