@@ -9,3 +9,6 @@
 *files/
 *old/
 */RwaData/*
+*.zip
+*RwaData*
+*.gitignore*
