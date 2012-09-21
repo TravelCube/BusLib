@@ -40,3 +40,9 @@ def insert(table,l):
     c.executemany(sql, l)
     conn.commit()
     c.close()
+
+def update(sql):
+    c = conn.cursor()
+    c.execute(sql)
+    conn.commit
+    c.close()

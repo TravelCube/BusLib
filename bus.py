@@ -24,10 +24,18 @@ def find(bus,lat,lon,acc,hour,day):
     print len(t4)
     t3 = place.find(lat,lon,acc,t4)
     print len(t3)
-    res = trips.get_routes(t3)
-    print len(res)
+    #res = trips.get_routes(t3)
+    #print len(res)
     print time.time() - t
-    return res
+    return t3
+
+def get_trips_stops(trip_ids):
+    """ find the stops files and the last station name for the trip ids
+
+    return distinct list of stop_file, last station
+    """
+    l = stops.get_stop_files_last_station(trip_ids)
+    return l
 
 def get_long_names(l):
     """ find the route name for the route ids, return distinct list
@@ -55,8 +63,9 @@ def get(bus,lat,lon,acc,hour,day):
         2. list od trip id, route id
     """
     r = find(bus,lat,lon,acc,hour,day)
-    names = get_long_names(r)
-    return names,r
+    r = get_trips_stops(r)
+    #names = get_long_names(r)
+    return r
 
 def get_ids(stops):
     ids = [x[2] for x in stops]
@@ -72,7 +81,7 @@ def add_lat_lon(stopscsv):
 def get_stops(trips_ids):
     """ return list of stops for the trip id"""
     l = rides.get_stop_files(trips_ids)
-    files = '/home/omer/tranz/gith/Bus/files'
+    files = '/home/omer/tranz/gith/Bus/new_files'
     if len(l) > 1:
         pass
         #erro
