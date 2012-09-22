@@ -68,24 +68,20 @@ def get(bus,lat,lon,acc,hour,day):
     return r
 
 def get_ids(stops):
-    ids = [x[2] for x in stops]
+    ids = [x[0] for x in stops]
     return ids
 
 def add_lat_lon(stopscsv):
         d = stops.get_stops_lat_lon(get_ids(stopscsv))
         res = []
         for row in stopscsv:
-           res.append(row + list(d[int(row[2])]))
+           res.append(row + list(d[int(row[0])]))
         return res
 
-def get_stops(trips_ids):
+def get_stops(file_name):
     """ return list of stops for the trip id"""
-    l = rides.get_stop_files(trips_ids)
     files = '/home/omer/tranz/gith/Bus/new_files'
-    if len(l) > 1:
-        pass
-        #erro
-    f = csv.reader(open(path.join(files,l[0])))
+    f = csv.reader(open(path.join(files,file_name)))
     l = []
     for r in f:
         l.append(r)
