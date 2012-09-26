@@ -3,7 +3,9 @@ from helpers import place
 from helpers import rides
 from helpers import bus_calendar
 from helpers import routes
+from helpers import model
 from helpers import trips
+from helpers import db
 import csv
 import time
 import csv
@@ -14,20 +16,61 @@ def find(bus,lat,lon,acc,hour,day):
 
     return a list of route id, trip id 
     """
+    t1 = time.time()
     t = time.time()
-    t1 = routes.find(bus)
-    print len(t1)
-    t2 = bus_calendar.find(day)
-    print len(t2)
-    ids = set(t1).intersection(set(t2))
-    t4 = rides.find(hour,ids)
-    print len(t4)
-    t3 = place.find(lat,lon,acc,t4)
-    print len(t3)
-    #res = trips.get_routes(t3)
-    #print len(res)
+    # data = {agancy: {diraction: {file_nmae : trip_ids}}}
+    data = db.get_data(bus)
     print time.time() - t
-    return t3
+    t = time.time()
+    if len(data.agencies) > 1:
+        agency = find_agancy(data,lat,lon,acc,hour,day)
+        print 'db'
+    else:
+        agency = data.agencies.iteritems().next()[1]
+
+    print time.time() - t
+    t = time.time()
+    if len(agency.diractions[0].file_names) > 1:
+        diraction0 = find_file_name(agency.diractions[0],lat,lon,acc,hour,day)
+        print 'db'
+    else:
+        diraction0 = agency.diractions[0].file_names.iteritems().next()[0]
+
+    print time.time() - t
+    t = time.time()
+    if len(agency.diractions[1].file_names) > 1:
+        diraction1 = find_file_name(agency.diractions[1],lat,lon,acc,hour,day)
+        print 'db'
+    else:
+        diraction1 = agency.diractions[1].file_names.iteritems().next()[0]
+
+    print time.time() - t
+    print time.time() - t1
+    return [diraction0,diraction1]
+
+def find_agancy(data,lat,lon,acc,hour,day):
+    for agency,obj in data.agencies.items():
+        trip_ids = obj.get_all_trip_ids()
+        trip_ids = bus_calendar.find(day,trip_ids)
+        if len(trip_ids) == 0:
+            continue
+        trip_ids = rides.find(hour, trip_ids)
+        if len(trip_ids) == 0:
+            continue
+        if place.find_first(lat,lon,acc,trip_ids):
+            return obj
+
+def find_file_name(diraction,lat,lon,acc,hour,day):
+    for file_name,obj in diraction.file_names.items():
+        trip_ids = obj.trip_ids
+        trip_ids = bus_calendar.find(day,trip_ids)
+        if len(trip_ids) == 0:
+            continue
+        trip_ids = rides.find(hour, trip_ids)
+        if len(trip_ids) == 0:
+            continue
+        if place.find_first(lat,lon,acc,trip_ids):
+            return file_name
 
 def get_trips_stops(trip_ids):
     """ find the stops files and the last station name for the trip ids
@@ -36,17 +79,6 @@ def get_trips_stops(trip_ids):
     """
     l = stops.get_stop_files_last_station(trip_ids)
     return l
-
-def get_long_names(l):
-    """ find the route name for the route ids, return distinct list
-
-    args:
-    l -- a list route id ...
-
-    return distnict list, route id and route name
-    """
-    routesIds = set([x[0] for x in l])
-    return routes.get_long_names(routesIds)
 
 def get(bus,lat,lon,acc,hour,day):
     """return the lines thact match the args
@@ -64,7 +96,6 @@ def get(bus,lat,lon,acc,hour,day):
     """
     r = find(bus,lat,lon,acc,hour,day)
     r = get_trips_stops(r)
-    #names = get_long_names(r)
     return r
 
 def get_ids(stops):

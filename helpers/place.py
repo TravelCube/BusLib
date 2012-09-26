@@ -62,7 +62,28 @@ def find(lat, lon, acc, trips_ids):
                 else:
                     d_stops[int(i)] = False
     return res
-                
+
+def find_first(lat, lon, acc, trips_ids):
+    acc = int(float(acc))
+    s = "'" + "','".join(trips_ids) + "'"
+    l = db.Query('select trip_id,t.shape_id,stops_ids from trips as t,shapes_to_stops as s where t.shape_id = s.shape_id and trip_id in ({0})'.format(s))
+    stops_ids = [x[2] for x in l]
+    for row in stops_ids:
+        a = row.split(';')
+        for r in a:
+            s1.add(int(r))
+    sql = 'select * from stops_ids where id in {0}'.format(tuple(s1))
+    stops = db.Query(sql)
+    
+    stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
+    d_stops = dict(stops_id_first)
+
+    for row in l:
+        for i in str(row[2]).split(';'):
+            r = calc(lat, lon, acc, d_stops[int(i)])
+            if r == True:
+                return True
+    return False
 
 def calc(lat,lon,acc, point):
     dis = d((lat,lon),(point[0],point[1])).meters

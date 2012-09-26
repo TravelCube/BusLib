@@ -1,4 +1,5 @@
 import sqlite3
+from model import *
 
 conn = sqlite3.connect('/home/omer/tranz/gith/Bus/DB/tranz.sqlite')
 conn.text_factory = str
@@ -46,3 +47,11 @@ def update(sql):
     c.execute(sql)
     conn.commit
     c.close()
+
+def get_data(bus_num):
+    sql = 'select routes.agency_id,t.diraction,ts.file_name,t.trip_id from routes join trips as t on t.route_id = routes.route_id join trips_stops as ts on t.trip_id=ts.trip_id where bus_num={0}'.format(bus_num)
+    l = Query(sql)
+    b = bus_root(bus_num)
+    for row in l:
+        b.add(row[0],row[1],row[2],row[3])
+    return b
