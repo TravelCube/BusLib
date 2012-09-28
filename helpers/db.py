@@ -63,7 +63,7 @@ def get_data(bus_num):
 
 def get_all_data():
     buses = {}
-    sql = 'select routes.bus_num, routes.agency_id,t.diraction,ts.file_name,t.trip_id,t.service_id,rides.start_time from routes join trips as t on t.route_id = routes.route_id join trips_stops as ts on t.trip_id=ts.trip_id join rides on t.trip_id = rides.trip_id join '
+    sql = 'select routes.bus_num, routes.agency_id,t.diraction,ts.file_name,t.trip_id,t.service_id,rides.start_time from routes join trips as t on t.route_id = routes.route_id join trips_stops as ts on t.trip_id=ts.trip_id join rides on t.trip_id = rides.trip_id '
     l = Query(sql)
     print 'start'
     print l[0]
@@ -74,13 +74,12 @@ def get_all_data():
     return buses
 
 import pickle
-f = open('./helpers/buses.pickle' ,'w')
-#buses = pickle.load(f)
-#if buses == None:
-#    print 'error'
-buses = get_all_data()
-print 'p'
-pickle.dump(buses,f)
+f = open('./helpers/buses.pickle' ,'r')
+buses = pickle.load(f)
+if buses == None:
+    print 'error'
+#buses = get_all_data()
+#pickle.dump(buses,f)
 f.close()
             
 def get_bus(bus_num):

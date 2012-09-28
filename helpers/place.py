@@ -70,11 +70,15 @@ stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
 d_stops = dict(stops_id_first)
 
 import time
-def find_first(lat, lon, acc, stops_ids, false_list):
+def find_first(lat, lon, acc, trip_ids, false_list):
     #print 'fs', len(false_list)
     t = time.time()
     acc = int(float(acc))
     
+    s = "'" + "','".join(trips_ids) + "'"
+    l = db.Query('select trip_id,t.shape_id,stops_ids from trips as t,shapes_to_stops as s where t.shape_id = s.shape_id and trip_id in ({0})'.format(s))
+    stops_ids = [x[2] for x in l]
+
     #print time.time() - t
     t = time.time()
     for i in stops_ids:
