@@ -11,6 +11,11 @@ def Query(sql):
     c.close()
     return l
 
+def query_open(sql):
+    c = conn.cursor()
+    c.execute(sql)
+    return c
+
 def First(l):
      return [r[0] for r in l]
 
@@ -49,9 +54,34 @@ def update(sql):
     c.close()
 
 def get_data(bus_num):
-    sql = 'select routes.agency_id,t.diraction,ts.file_name,t.trip_id from routes join trips as t on t.route_id = routes.route_id join trips_stops as ts on t.trip_id=ts.trip_id where bus_num={0}'.format(bus_num)
+    sql = 'select routes.agency_id,t.diraction,ts.file_name,t.trip_id,t.service_id,rides.start_time from routes join trips as t on t.route_id = routes.route_id join trips_stops as ts on t.trip_id=ts.trip_id join rides on t.trip_id = rides.trip_id where bus_num={0}'.format(bus_num)
     l = Query(sql)
     b = bus_root(bus_num)
     for row in l:
-        b.add(row[0],row[1],row[2],row[3])
+        b.add(row[0],row[1],row[2],row[3],row[4],row[5])
     return b
+
+def get_all_data():
+    buses = {}
+    sql = 'select routes.bus_num, routes.agency_id,t.diraction,ts.file_name,t.trip_id,t.service_id,rides.start_time from routes join trips as t on t.route_id = routes.route_id join trips_stops as ts on t.trip_id=ts.trip_id join rides on t.trip_id = rides.trip_id join '
+    l = Query(sql)
+    print 'start'
+    print l[0]
+    for row in l:
+        if row[0] not in buses:
+            buses[row[0]] = bus_root(row[0])
+        buses[row[0]].add(row[1],row[2],row[3],row[4],row[5],row[6])
+    return buses
+
+import pickle
+f = open('./helpers/buses.pickle' ,'w')
+#buses = pickle.load(f)
+#if buses == None:
+#    print 'error'
+buses = get_all_data()
+print 'p'
+pickle.dump(buses,f)
+f.close()
+            
+def get_bus(bus_num):
+    return buses[bus_num]
