@@ -2,13 +2,12 @@ from helpers import stops
 from helpers import place
 from helpers import rides
 from helpers import bus_calendar
-from helpers import routes
-from helpers import model
-from helpers import trips
+#from helpers import routes
+#from helpers import model
+#from helpers import trips
 from helpers import db
 import csv
 import time
-import csv
 from os import path
 from datetime import datetime
 from multiprocessing import Pool
@@ -32,18 +31,16 @@ def find(bus,lat,lon,acc,hour,day):
     t = time.time()
     if len(data.agencies) > 1:
         print 'db'
-#        agency, false_list = find_agancy(data,lat,lon,acc,hour,day, false_list)
-        agency = new_find_agency(data,lat,lon,acc,hour,day)
+        agency, false_list = new_find_agency(data,lat,lon,acc,hour,day)
     else:
         agency = data.agencies.iteritems().next()[1]
 
     print time.time() - t, 'agency'
     t = time.time()
-    return agency
-#
+
     if len(agency.diractions[0].file_names) > 1:
         print 'db'
-        diraction0, false_list = find_file_name(agency.diractions[0],lat,lon,acc,hour,day, false_list)
+        diraction0, false_list = new_find_file_name(agency.diractions[0],lat,lon,acc,hour,day, false_list)
     else:
         if len(agency.diractions[0].file_names) == 0:
             diraction0 = None
@@ -54,7 +51,7 @@ def find(bus,lat,lon,acc,hour,day):
     t = time.time()
     if len(agency.diractions[1].file_names) > 1:
         print 'db'
-        diraction1, false_list = find_file_name(agency.diractions[1],lat,lon,acc,hour,day, false_list)
+        diraction1, false_list = new_find_file_name(agency.diractions[1],lat,lon,acc,hour,day, false_list)
     else:
         diraction1 = agency.diractions[1].file_names.iteritems().next()[0]
 
@@ -99,7 +96,9 @@ def new_find_agency(data,lat,lon,acc,hour,day):
     args = [(x[1],lat,lon,acc,hour,service_ids) for x in data.agencies.items()]
     #for a in args:
     #    agency_check(a)
-    it = Pool(processes=10).imap_unordered(agency_check, args)
+    pool = Pool(processes=len(args)) 
+    it = pool.imap_unordered(agency_check, args)
+    pool.close()
     for i in range(len(args)):
         print 'i', i
         obj = it.next()
@@ -119,7 +118,7 @@ def agency_check(args):
     shape_ids = [x.shape_id for x in trips]
     res,false_list =  place.find_first(lat,lon,acc,shape_ids, false_list)
     if res == True:
-        return obj
+        return obj, false_list
     else:
         return None
 
@@ -138,6 +137,23 @@ def check_services(trips,service_ids):
         if t.service_id in service_ids:
             res.append(t)
     return res
+
+def new_find_file_name(diraction,lat,lon,acc,hour,day, false_list):
+    service_ids = bus_calendar.get_ids(day)
+    false_list = false_list
+    for file_name,obj in diraction.file_names.items():
+        trips= obj.trip_ids.values()
+        trips= check_services(trips,service_ids)
+        if len(trips) == 0:
+            continue
+        trips = check_start_time(trips,hour)
+        if len(trips) == 0:
+            continue
+        shape_ids = [x.shape_id for x in trips]
+        res,false_list =  place.find_first(lat,lon,acc,shape_ids, false_list)
+        if res == True:
+            return file_name, false_list
+    return None,false_list
 
 def find_file_name(diraction,lat,lon,acc,hour,day, false_list):
     false_list = false_list
