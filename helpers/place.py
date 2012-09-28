@@ -29,8 +29,8 @@ def find_old(lat,lon, acc):
     print len(res)
     return db.get_trips_ids('shape_id',res)
 
-s1 = set()
 def find(lat, lon, acc, trips_ids):
+    s1 = set()
     acc = int(float(acc))
     s = "'" + "','".join(trips_ids) + "'"
     l = db.Query('select trip_id,t.shape_id,stops_ids from trips as t,shapes_to_stops as s where t.shape_id = s.shape_id and trip_id in ({0})'.format(s))
@@ -54,7 +54,7 @@ def find(lat, lon, acc, trips_ids):
             elif d_stops[int(i)] == False:
                 pass
             else:
-                r = calc(lat, lon, acc, d_stops[int(i)])
+                r = calc_c(lat, lon, acc, d_stops[int(i)])
                 if r == True:
                     res.append(row[0])
                     d_stops[int(i)] = True
@@ -63,27 +63,33 @@ def find(lat, lon, acc, trips_ids):
                     d_stops[int(i)] = False
     return res
 
-def find_first(lat, lon, acc, trips_ids):
-    acc = int(float(acc))
-    s = "'" + "','".join(trips_ids) + "'"
-    l = db.Query('select trip_id,t.shape_id,stops_ids from trips as t,shapes_to_stops as s where t.shape_id = s.shape_id and trip_id in ({0})'.format(s))
-    stops_ids = [x[2] for x in l]
-    for row in stops_ids:
-        a = row.split(';')
-        for r in a:
-            s1.add(int(r))
-    sql = 'select * from stops_ids where id in {0}'.format(tuple(s1))
-    stops = db.Query(sql)
-    
-    stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
-    d_stops = dict(stops_id_first)
+sql = 'select * from stops_ids'
+stops = db.Query(sql)
 
-    for row in l:
-        for i in str(row[2]).split(';'):
-            r = calc(lat, lon, acc, d_stops[int(i)])
-            if r == True:
-                return True
-    return False
+stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
+d_stops = dict(stops_id_first)
+
+import time
+def find_first(lat, lon, acc, stops_ids, false_list):
+    #print 'fs', len(false_list)
+    t = time.time()
+    acc = int(float(acc))
+    
+    #print time.time() - t
+    t = time.time()
+    for i in stops_ids:
+        if int(i) in false_list:
+            continue
+        r = calc_c(lat, lon, acc, d_stops[int(i)])
+        if r == True:
+            l.close()
+            #print time.time() - t
+            return True,false_list
+        else:
+            false_list.append(int(i))
+    l.close()
+    #print time.time() - t
+    return False,false_list
 
 def calc(lat,lon,acc, point):
     dis = d((lat,lon),(point[0],point[1])).meters
@@ -92,4 +98,26 @@ def calc(lat,lon,acc, point):
         if dis <= acc:
             return True
     return False
+
+def calc_c(lat,lon,acc,point):
+    dis = dt((lat,lon),(point[0],point[1]))
+    if dis <= acc:
+        dis = dt((lat,lon),(point[2],point[3]))
+        if dis <= acc:
+            return True
+    return False
+
+from math import radians, cos, sin, asin, sqrt
+
+def dt(p1,p2):
+    lon1, lat1, lon2, lat2 = map(radians, [float(p1[1]), float(p1[0]), p2[1], p2[0]])
+    # haversine formula 
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    b = asin(sqrt(a)) 
+    c = 2 * b
+    km = 6367 * c
+    meters = km * 1000
+    return meters
 
