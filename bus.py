@@ -16,7 +16,7 @@ from multiprocessing import Pool
 def test(num):
     print find(num,'32.306622','34.901074','100.0','10:00:00','sunday')
     print 'old'
-    print find_old(num,'32.306622','34.901074','100.0','10:00:00','sunday')
+    #print find_old(num,'32.306622','34.901074','100.0','10:00:00','sunday')
 
 def find(bus,lat,lon,acc,hour,day):
     """ finds the trip ids that mach the args - args are like in get()
@@ -39,6 +39,8 @@ def find(bus,lat,lon,acc,hour,day):
 
     print time.time() - t, 'agency'
     t = time.time()
+    return agency
+#
     if len(agency.diractions[0].file_names) > 1:
         print 'db'
         diraction0, false_list = find_file_name(agency.diractions[0],lat,lon,acc,hour,day, false_list)
@@ -87,21 +89,25 @@ def find_agancy(data,lat,lon,acc,hour,day, false_list):
         trips = check_start_time(trips,hour)
         if len(trips) == 0:
             continue
-        trip_ids = [x.tid for x in trips]
-        res,false_list =  place.find_first(lat,lon,acc,trip_ids, false_list)
+        shape_ids = [x.shape_id for x in trips]
+        res,false_list =  place.find_first(lat,lon,acc, shape_ids, false_list)
         if res == True:
             return obj, false_list
 
-def new_find_agency(data,lat,lon,acc,hour,day, false_list):
+def new_find_agency(data,lat,lon,acc,hour,day):
     service_ids = bus_calendar.get_ids(day)
-    args = [(x,lat,lon,acc,hour,service_ids) for x in data.agencies.items()]
-    it = pool.imap_unordered(agency_check, args)
-    for i in xrange(args):
-        obl = it.next()
+    args = [(x[1],lat,lon,acc,hour,service_ids) for x in data.agencies.items()]
+    #for a in args:
+    #    agency_check(a)
+    it = Pool(processes=10).imap_unordered(agency_check, args)
+    for i in range(len(args)):
+        print 'i', i
+        obj = it.next()
         if obj != None:
             return obj
 
-def agency_check(obj,lat,lon,acc,hour,service_ids)
+def agency_check(args):
+    obj,lat,lon,acc,hour,service_ids = args
     trips= obj.get_all_trip_ids()
     trips = check_services(trips,service_ids)
     if len(trips) == 0:
@@ -109,9 +115,9 @@ def agency_check(obj,lat,lon,acc,hour,service_ids)
     trips = check_start_time(trips,hour)
     if len(trips) == 0:
         return None
-    trip_ids = [x.tid for x in trips]
     false_list = []
-    res,false_list =  place.find_first(lat,lon,acc,trip_ids, false_list)
+    shape_ids = [x.shape_id for x in trips]
+    res,false_list =  place.find_first(lat,lon,acc,shape_ids, false_list)
     if res == True:
         return obj
     else:

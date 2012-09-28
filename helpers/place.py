@@ -70,29 +70,23 @@ stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
 d_stops = dict(stops_id_first)
 
 import time
-def find_first(lat, lon, acc, trip_ids, false_list):
-    #print 'fs', len(false_list)
-    t = time.time()
+def find_first(lat, lon, acc, shape_ids, false_list):
     acc = int(float(acc))
-    
-    s = "'" + "','".join(trips_ids) + "'"
-    l = db.Query('select trip_id,t.shape_id,stops_ids from trips as t,shapes_to_stops as s where t.shape_id = s.shape_id and trip_id in ({0})'.format(s))
-    stops_ids = [x[2] for x in l]
+    if len(shape_ids) == 1:
+        sql = 'select stops_ids from shapes_to_stops where shape_id = {0}'.format(shape_ids[0])
+    else: 
+        sql = 'select stops_ids from shapes_to_stops where shape_id in {0}'.format(tuple(shape_ids))
+    l = db.First(db.Query(sql))
 
-    #print time.time() - t
-    t = time.time()
-    for i in stops_ids:
-        if int(i) in false_list:
-            continue
-        r = calc_c(lat, lon, acc, d_stops[int(i)])
-        if r == True:
-            l.close()
-            #print time.time() - t
-            return True,false_list
-        else:
-            false_list.append(int(i))
-    l.close()
-    #print time.time() - t
+    for row in l:
+        for i in str(row).split(';'):
+            if int(i) in false_list:
+                continue
+            r = calc_c(lat, lon, acc, d_stops[int(i)])
+            if r == True:
+                return True,false_list
+            else:
+                false_list.append(int(i))
     return False,false_list
 
 def calc(lat,lon,acc, point):

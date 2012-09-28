@@ -46,9 +46,10 @@ class c_trip_id:
     def __init__(self):
         self.start_time = None
         self.service_id = None
-        self.stops_ids = None
+        self.shape_id = None
 
-    def add(self,tid,service_id, start_time):
+    def add(self,tid,service_id, start_time, shape_id):
         self.start_time = start_time
         self.service_id = service_id
         self.tid = tid
+        self.shape_id = shape_id
