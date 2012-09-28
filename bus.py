@@ -11,6 +11,7 @@ import time
 import csv
 from os import path
 from datetime import datetime
+from multiprocessing import Pool
 
 def test(num):
     print find(num,'32.306622','34.901074','100.0','10:00:00','sunday')
@@ -31,7 +32,8 @@ def find(bus,lat,lon,acc,hour,day):
     t = time.time()
     if len(data.agencies) > 1:
         print 'db'
-        agency, false_list = find_agancy(data,lat,lon,acc,hour,day, false_list)
+#        agency, false_list = find_agancy(data,lat,lon,acc,hour,day, false_list)
+        agency = new_find_agency(data,lat,lon,acc,hour,day)
     else:
         agency = data.agencies.iteritems().next()[1]
 
@@ -89,6 +91,31 @@ def find_agancy(data,lat,lon,acc,hour,day, false_list):
         res,false_list =  place.find_first(lat,lon,acc,trip_ids, false_list)
         if res == True:
             return obj, false_list
+
+def new_find_agency(data,lat,lon,acc,hour,day, false_list):
+    service_ids = bus_calendar.get_ids(day)
+    args = [(x,lat,lon,acc,hour,service_ids) for x in data.agencies.items()]
+    it = pool.imap_unordered(agency_check, args)
+    for i in xrange(args):
+        obl = it.next()
+        if obj != None:
+            return obj
+
+def agency_check(obj,lat,lon,acc,hour,service_ids)
+    trips= obj.get_all_trip_ids()
+    trips = check_services(trips,service_ids)
+    if len(trips) == 0:
+        return None
+    trips = check_start_time(trips,hour)
+    if len(trips) == 0:
+        return None
+    trip_ids = [x.tid for x in trips]
+    false_list = []
+    res,false_list =  place.find_first(lat,lon,acc,trip_ids, false_list)
+    if res == True:
+        return obj
+    else:
+        return None
 
 def check_start_time(trips,hour):
     hour = datetime.strptime(hour,'%H:%M:%S')
