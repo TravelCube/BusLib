@@ -20,90 +20,56 @@ def test(num):
 def find(bus,lat,lon,acc,hour,day):
     """ finds the trip ids that mach the args - args are like in get()
 
-    return a list of route id, trip id 
-    """
-    false_list = []
-    t1 = time.time()
-    t = time.time()
-    # data = {agancy: {diraction: {file_nmae : trip_ids}}}
-    data = db.get_bus(bus)
-    print time.time() - t, 'get data'
-    t = time.time()
-    if len(data.agencies) > 1:
-        print 'db'
-        agency, false_list = new_find_agency(data,lat,lon,acc,hour,day)
-    else:
-        agency = data.agencies.iteritems().next()[1]
+    returns tuple of two files name,
+    one for eche diraction.
+    one of them can be None.
 
-    print time.time() - t, 'agency'
-    t = time.time()
+    if there is no bus match the args - return None
+    """
+    root = db.get_bus(bus)
+    # root is helper.model.bus_root object
+
+    if root == None:
+        return None
+
+    if len(root.agencies) > 1:
+        agency, false_list = _find_agency(root.agencies,lat,lon,acc,hour,day)
+    else:
+        agency = root.agencies.iteritems().next()[1]
+
+    if agency == None:
+        return None
 
     if len(agency.diractions[0].file_names) > 1:
-        print 'db'
-        diraction0, false_list = new_find_file_name(agency.diractions[0],lat,lon,acc,hour,day, false_list)
+        diraction0, false_list = find_file_name(agency.diractions[0],lat,lon,acc,hour,day, false_list)
     else:
         if len(agency.diractions[0].file_names) == 0:
             diraction0 = None
         else:
             diraction0 = agency.diractions[0].file_names.iteritems().next()[0]
 
-    print time.time() - t
-    t = time.time()
     if len(agency.diractions[1].file_names) > 1:
-        print 'db'
-        diraction1, false_list = new_find_file_name(agency.diractions[1],lat,lon,acc,hour,day, false_list)
+        diraction1, false_list = find_file_name(agency.diractions[1],lat,lon,acc,hour,day, false_list)
     else:
         diraction1 = agency.diractions[1].file_names.iteritems().next()[0]
 
-    print time.time() - t
-    print time.time() - t1
     return [diraction0,diraction1]
 
-def find_old(bus,lat,lon,acc,hour,day):
-    t = time.time()
-    t1 = routes.find(bus)
-    print len(t1)
-    t2 = bus_calendar.find_all(day)
-    print len(t2)
-    ids = set(t1).intersection(set(t2))
-    t4 = rides.find(hour,ids)
-    print len(t4)
-    t3 = place.find(lat,lon,acc,t4)
-    print len(t3)
-    #res = trips.get_routes(t3)
-    #print len(res)
-    print time.time() - t
-    return t3
+def _find_agency(agencies,lat,lon,acc,hour,day):
+    """ private function, finds the agency for the given args
+    uses Pool for speed
 
-def find_agancy(data,lat,lon,acc,hour,day, false_list):
-    false_list = false_list
-    for agency,obj in data.agencies.items():
-        trips= obj.get_all_trip_ids()
-        service_ids = bus_calendar.get_ids(day)
-        trips = check_services(trips,service_ids)
-        if len(trips) == 0:
-            continue
-        trips = check_start_time(trips,hour)
-        if len(trips) == 0:
-            continue
-        shape_ids = [x.shape_id for x in trips]
-        res,false_list =  place.find_first(lat,lon,acc, shape_ids, false_list)
-        if res == True:
-            return obj, false_list
-
-def new_find_agency(data,lat,lon,acc,hour,day):
+    return the agency class, if ther isn't return None
+    """
     service_ids = bus_calendar.get_ids(day)
-    args = [(x[1],lat,lon,acc,hour,service_ids) for x in data.agencies.items()]
-    #for a in args:
-    #    agency_check(a)
+    args = [(x[1],lat,lon,acc,hour,service_ids) for x in agencies.items()]
     pool = Pool(processes=len(args)) 
     it = pool.imap_unordered(agency_check, args)
-    pool.close()
     for i in range(len(args)):
-        print 'i', i
         obj = it.next()
         if obj != None:
             return obj
+    return None
 
 def agency_check(args):
     obj,lat,lon,acc,hour,service_ids = args
@@ -132,15 +98,22 @@ def check_start_time(trips,hour):
     return res
 
 def check_services(trips,service_ids):
+    """ return the trips that there service_id is in the list: service_ids
+        return [] for defaulte
+    """
     res = []
     for t in trips:
         if t.service_id in service_ids:
             res.append(t)
     return res
 
-def new_find_file_name(diraction,lat,lon,acc,hour,day, false_list):
+def find_file_name(diraction,lat,lon,acc,hour,day, false_list):
+    """ finds the file_name that matche the args
+    false_list is for the place.find - it is a list of points that alrady been checked
+    return tuple: file_name, false_list
+    or None, false_list if there isn't file name that matches
+    """
     service_ids = bus_calendar.get_ids(day)
-    false_list = false_list
     for file_name,obj in diraction.file_names.items():
         trips= obj.trip_ids.values()
         trips= check_services(trips,service_ids)
@@ -155,27 +128,12 @@ def new_find_file_name(diraction,lat,lon,acc,hour,day, false_list):
             return file_name, false_list
     return None,false_list
 
-def find_file_name(diraction,lat,lon,acc,hour,day, false_list):
-    false_list = false_list
-    for file_name,obj in diraction.file_names.items():
-        trip_ids = obj.trip_ids
-        trip_ids = bus_calendar.find(day,trip_ids)
-        if len(trip_ids) == 0:
-            continue
-        trip_ids = rides.find(hour, trip_ids)
-        if len(trip_ids) == 0:
-            continue
-        res,false_list =  place.find_first(lat,lon,acc,trip_ids, false_list)
-        if res == True:
-            return file_name, false_list
-    return None,false_list
-
-def get_trips_stops(trip_ids):
+def _get_files_first_stop(file_names):
     """ find the stops files and the last station name for the trip ids
 
     return distinct list of stop_file, last station
     """
-    l = stops.get_stop_files_last_station(trip_ids)
+    l = stops.get_stop_files_last_station(file_names)
     return l
 
 def get_long_names(l):
@@ -200,12 +158,12 @@ def get(bus,lat,lon,acc,hour,day):
     dat -- the day in words (also can be diffrent in client-server)
 
     return:
-        1. list of route id, route name
-        2. list od trip id, route id
+        tuple of 2 tuples:
+            file_name, last stop
+        one for eche diraction
     """
     r = find(bus,lat,lon,acc,hour,day)
-    r = get_trips_stops(r)
-    #names = get_long_names(r)
+    r = _get_files_first_stop(r)
     return r
 
 def get_ids(stops):
@@ -227,4 +185,4 @@ def get_stops(file_name):
     for r in f:
         l.append(r)
     l = add_lat_lon(l)
-    return l
+    #return l
