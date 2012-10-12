@@ -43,7 +43,7 @@ class file_name:
         self.trip_ids[trip_id].add(trip_id,*args)
 
     def is_file_name_match(self,userd,false_list):
-        trips = self.trip_ids
+        trips = self.trip_ids.values()
         trips= check_services(trips,userd.service_ids)
         if len(trips) == 0:
             return False, false_list
@@ -51,7 +51,7 @@ class file_name:
         if len(trips) == 0:
             return False, false_list
         shape_ids = [x.shape_id for x in trips]
-        res,false_list =  place.find_first(user.lat,user.lon,user.acc,shape_ids, false_list)
+        res,false_list =  place.find_first(userd.lat,userd.lon,userd.acc,shape_ids, false_list)
         if res == True:
             return True, false_list
         else:
@@ -68,12 +68,12 @@ class diraction:
 
     def find_file_name_macth(self,userd, false_list):
         if len(self.file_names) == 1:
-             return self.file_names.values()[0], false_list
+             return self.file_names.keys()[0], false_list
         else:
-            for file_name_obj in self.file_names.values():
+            for file_name,file_name_obj in self.file_names.iteritems():
                 res, false_list = file_name_obj.is_file_name_match(userd, false_list)
                 if res:
-                    return file_name_obj, false_list
+                    return file_name, false_list
             return None, false_list
 
 class bus_root:
@@ -94,7 +94,7 @@ class bus_root:
                 res,false_list = agency.is_agency_match(userd, false_list)
                 if res:
                     return agency, false_list
-            return None
+            return None, []
 
     def find_file_names(self,userd):
         false_list = []

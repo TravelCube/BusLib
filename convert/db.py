@@ -1,8 +1,16 @@
 import sqlite3
 
-conn = sqlite3.connect('/home/omer/tranz/gith/Bus/DB/tranz.sqlite')
-print 'conn'
-conn.text_factory = str
+conn = None
+
+def init(path):
+    global conn
+    conn = sqlite3.connect(path)
+    print 'conn'
+    conn.text_factory = str
+
+def close():
+    global conn
+    conn.close()
 
 def Query(sql):
     c = conn.cursor()
