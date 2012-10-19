@@ -1,15 +1,24 @@
 import db
 import stops
 import model
+import memcache
 #from celery import group
 #from tasks import check
 
+mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+
 def get_model(bus_num):
+    obj = mc.get(bus_num)
+    if obj != None:
+        print 'ok'
+        return obj
+
     sql = 'select * from bus_root where bus_num={0}'.format(bus_num)
     l = db.Query(sql)
     b = model.bus_root(bus_num)
     for row in l:
-        b.add(row[1],row[2],row[3],row[4],row[5],row[6],row[7])
+        b.add(row[1],row[2],row[3],row[4],row[5],row[6])
+    mc.set(bus_num,b)
     return b
 
 def create_user_data(lat,lon,acc,hour,day):
