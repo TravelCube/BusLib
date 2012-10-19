@@ -73,20 +73,19 @@ import time
 def find_first(lat, lon, acc, shape_ids, false_list):
     acc = int(float(acc))
     if len(shape_ids) == 1:
-        sql = 'select stops_ids from shapes_to_stops where shape_id = {0}'.format(shape_ids[0])
+        sql = 'select line_id from shapes_to_lines where shape_id = {0}'.format(shape_ids[0])
     else: 
-        sql = 'select stops_ids from shapes_to_stops where shape_id in {0}'.format(tuple(shape_ids))
+        sql = 'select line_id from shapes_to_lines where shape_id in {0}'.format(tuple(shape_ids))
     l = db.First(db.Query(sql))
 
-    for row in l:
-        for i in str(row).split(';'):
-            if int(i) in false_list:
-                continue
-            r = calc_c(lat, lon, acc, d_stops[int(i)])
-            if r == True:
-                return True,false_list
-            else:
-                false_list.append(int(i))
+    for i in l:
+        if int(i) in false_list:
+            continue
+        r = calc_c(lat, lon, acc, d_stops[int(i)])
+        if r == True:
+            return True,false_list
+        else:
+            false_list.append(int(i))
     return False,false_list
 
 def calc(lat,lon,acc, point):
