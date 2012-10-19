@@ -14,19 +14,24 @@ class agency:
         res = []
         for d in self.diractions:
             for name in d.file_names.values():
-                for v in name.trip_ids.values():
+                for v in name.shapes.values():
                     res.append(v)
         return res
 
     def is_agency_match(self, userd, false_list):
-        trips= self.get_all_trip_ids()
-        trips = check_services(trips,userd.service_ids)
-        if len(trips) == 0:
+        print self.agency_id
+        shapes= self.get_all_trip_ids()
+        shapes = check_service_time(shapes,userd.service_ids,userd.hour)
+        #shapes = check_services(shapes ,userd.service_ids)
+        #if len(shapes) == 0:
+        #    print 'f1'
+        #    return False, false_list
+        #shapes = check_start_time(shapes,userd.hour)
+        if len(shapes) == 0:
+            print 'f2'
             return False, false_list
-        trips = check_start_time(trips,userd.hour)
-        if len(trips) == 0:
-            return False, false_list
-        shape_ids = [x.shape_id for x in trips]
+        shape_ids = [x.shape_id for x in shapes]
+        print 'len',len(shape_ids)
         res,false_list =  place.find_first(userd.lat,userd.lon,userd.acc,shape_ids, false_list)
         if res == True:
             return True, false_list
@@ -39,18 +44,19 @@ class file_name:
     
     def add(self,shape_id, *args):
         if shape_id not in self.shapes:
-            self.shapes[shape_id] = shape()
-        self.shapes[shape_id].add(shape_id,*args)
+            self.shapes[shape_id] = shape(shape_id)
+        self.shapes[shape_id].add(*args)
 
     def is_file_name_match(self,userd,false_list):
-        trips = self.trip_ids.values()
-        trips= check_services(trips,userd.service_ids)
-        if len(trips) == 0:
+        shapes = self.shapes.values()
+        shapes = check_service_time(shapes,userd.service_ids,userd.hour)
+        #shapes= check_services(shapes,userd.service_ids)
+        #if len(shapes) == 0:
+        #    return False, false_list
+        #shapes = check_start_time(shapes,userd.hour)
+        if len(shapes) == 0:
             return False, false_list
-        trips = check_start_time(trips,userd.hour)
-        if len(trips) == 0:
-            return False, false_list
-        shape_ids = [x.shape_id for x in trips]
+        shape_ids = [x.shape_id for x in shapes]
         res,false_list =  place.find_first(userd.lat,userd.lon,userd.acc,shape_ids, false_list)
         if res == True:
             return True, false_list
@@ -91,7 +97,9 @@ class bus_root:
             return self.agencies.values()[0], false_list
         else:
             for agency in self.agencies.values():
+                print agency
                 res,false_list = agency.is_agency_match(userd, false_list)
+                print len(false_list)
                 if res:
                     return agency, false_list
             return None, []
@@ -107,10 +115,12 @@ class bus_root:
         return (file_name0, file_name1)
 
 class shape:
-    def add(self,shape_id,service_id, start_time):
-        self.start_time = start_time
-        self.service_id = service_id
-        self.shape_id = shape_id
+    def __init__(self, shape_id):
+            self.services = []
+            self.shape_id =  shape_id
+
+    def add(self,service_id, start_time):
+            self.services.append((service_id, start_time))
 
 class user_data:
     def __init__(self, lat, lon, acc, hour, day):
@@ -124,7 +134,8 @@ def check_start_time(trips,hour):
     hour = datetime.strptime(hour,'%H:%M:%S')
     res = []
     for t in trips:
-        st = datetime.strptime(t.start_time,'%Y-%m-%d %H:%M:%S')
+        st = datetime.strptime(t.start_time,'%H:%M:%S')
+        print st
         if hour > st:
             res.append(t)
     return res
@@ -135,6 +146,18 @@ def check_services(trips,service_ids):
     """
     res = []
     for t in trips:
-        if t.service_id in service_ids:
+        print t.service_id
+        if int(t.service_id) in service_ids:
             res.append(t)
+    return res
+
+def check_service_time(shapes, service_ids, hour):
+    hour = datetime.strptime(hour,'%H:%M:%S')
+    res = []
+    for shape in shapes:
+        for r in shape.services:
+            if int(r[0]) in service_ids:
+                if hour > datetime.strptime(r[1],'%H:%M:%S'):
+                    res.append(shape)
+                    continue
     return res
