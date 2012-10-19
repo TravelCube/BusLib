@@ -63,7 +63,7 @@ def find(lat, lon, acc, trips_ids):
                     d_stops[int(i)] = False
     return res
 
-sql = 'select * from stops_ids'
+sql = 'select * from lines'
 stops = db.Query(sql)
 
 stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
