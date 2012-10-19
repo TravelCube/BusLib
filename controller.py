@@ -24,11 +24,11 @@ def get_model(bus_num):
 def create_user_data(lat,lon,acc,hour,day):
     return model.user_data(lat,lon,acc,hour,day)
 
-def test():
-    a = get_model(45)
+def test(bus):
+    a = get_model(bus)
     u = create_user_data('32.311727','34.902055','700.0','12:00:00','sunday')
-    return a,u
-
+    print a,u
+    return get_file_names_from_bus_num(bus,'32.311727','34.902055','700.0','15:00:00','sunday')
 
 def get_file_names_from_bus_num(bus_num, lat, lon, acc, hour, day):
     m = get_model(bus_num)
