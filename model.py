@@ -35,12 +35,12 @@ class agency:
 
 class file_name:
     def __init__(self):
-        self.trip_ids = {}
+        self.shapes = {}
     
-    def add(self,trip_id, *args):
-        if trip_id not in self.trip_ids:
-            self.trip_ids[trip_id] = c_trip_id()
-        self.trip_ids[trip_id].add(trip_id,*args)
+    def add(self,shape_id, *args):
+        if shape_id not in self.shapes:
+            self.shapes[shape_id] = shape()
+        self.shapes[shape_id].add(shape_id,*args)
 
     def is_file_name_match(self,userd,false_list):
         trips = self.trip_ids.values()
@@ -106,16 +106,10 @@ class bus_root:
         file_name1, false_list = magency.diractions[1].find_file_name_macth(userd, false_list)
         return (file_name0, file_name1)
 
-class c_trip_id:
-    def __init__(self):
-        self.start_time = None
-        self.service_id = None
-        self.shape_id = None
-
-    def add(self,tid,service_id, start_time, shape_id):
+class shape:
+    def add(self,shape_id,service_id, start_time):
         self.start_time = start_time
         self.service_id = service_id
-        self.tid = tid
         self.shape_id = shape_id
 
 class user_data:
