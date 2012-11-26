@@ -50,10 +50,6 @@ class file_name:
     def is_file_name_match(self,userd,false_list):
         shapes = self.shapes.values()
         shapes = check_service_time(shapes,userd.service_ids,userd.hour)
-        #shapes= check_services(shapes,userd.service_ids)
-        #if len(shapes) == 0:
-        #    return False, false_list
-        #shapes = check_start_time(shapes,userd.hour)
         if len(shapes) == 0:
             return False, false_list
         shape_ids = [x.shape_id for x in shapes]
