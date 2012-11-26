@@ -10,7 +10,6 @@ mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 def get_model(bus_num):
     obj = mc.get(bus_num)
     if obj != None:
-        print 'ok'
         return obj
 
     sql = 'select * from bus_root where bus_num={0}'.format(bus_num)
@@ -31,11 +30,10 @@ def test(bus):
     return get_file_names_from_bus_num(bus,'32.311727','34.902055','700.0','15:00:00','sunday')
 
 def get_file_names_from_bus_num(bus_num, lat, lon, acc, hour, day):
-    m = get_model(bus_num)
-    res =  m.find_file_names(create_user_data(lat, lon, acc, hour, day))
-    if res == None:
-        print 'error!!!!'
-    print res
+    bus_model = get_model(bus_num)
+    res =  bus_model.find_file_names(create_user_data(lat, lon, acc, hour, day))
+    if res = None:
+        return []
     if res[1] == None:
         res = [res[0]]
     return _get_files_first_stop(res)

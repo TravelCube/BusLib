@@ -9,9 +9,8 @@ def get_stops_lat_lon(ids):
         res[r[0]] = (r[1],r[2])
     return res 
 
-def get_stop_files_last_station(file_names):
-    if len(file_names) == 1:
-        sql = "select file_name,last_station from files_last_station where file_name = '{0}'".format(file_names[0])
-    else:
-        sql = 'select file_name,last_station from files_last_station where file_name in {0}'.format(tuple(file_names))
-    return db.Query(sql)
+def get_stop_files_last_station(file_names): if len(file_names) == 1: sql
+= "select file_name,last_station from files_last_station where file_name
+= '{0}'".format(file_names[0]) else: sql = 'select file_name,last_station
+from files_last_station where file_name in {0}'.format(tuple(file_names))
+return db.Query(sql)
