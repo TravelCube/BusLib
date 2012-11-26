@@ -63,11 +63,6 @@ def find(lat, lon, acc, trips_ids):
                     d_stops[int(i)] = False
     return res
 
-sql = 'select * from lines'
-stops = db.Query(sql)
-
-stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
-d_stops = dict(stops_id_first)
 
 import time
 def find_first(lat, lon, acc, shape_ids, false_list):
@@ -77,6 +72,12 @@ def find_first(lat, lon, acc, shape_ids, false_list):
     else: 
         sql = 'select line_id from shapes_to_lines where shape_id in {0}'.format(tuple(shape_ids))
     l = db.First(db.Query(sql))
+
+    sql = 'select * from lines where line_id in {0}'.format(tuple(l))
+    stops = db.Query(sql)
+
+    stops_id_first = [(x[4],(x[0],x[1],x[2],x[3])) for x in stops]
+    d_stops = dict(stops_id_first)
 
     for i in l:
         if int(i) in false_list:
