@@ -11,7 +11,6 @@ def set_shapes(rwe_data_path):
     for row in f:
         row = row.split(',')
         shapes.append(row)
-    print len(shapes)
     return shapes
 
 
@@ -19,7 +18,6 @@ def run(shapes):
     rer = lambda x: (x[2],x[3],x[0],x[1])
     lines = {}
     for i in range(0,len(shapes)-1):
-        print i
         start = shapes[i]
         end = shapes[i+1]
         if int(start[3]) == int(end[3])-1: # check the sequence
